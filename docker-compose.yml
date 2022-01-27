@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+    nginx:
+        container_name: notify-parser-nginx
+        build:
+            context: .docker/nginx
+            dockerfile: Dockerfile
+        ports:
+            - "8080:80"
+        volumes:
+            - ./notify-parser:/var/www/notify-parser
+        depends_on:
+            - php-fpm
+
+    php-fpm:
+        container_name: notify-parser-php-fpm
+        build:
+            context: .docker/php-fpm
+            dockerfile: Dockerfile
+        environment:
+            - "DB_PORT=5432"
+            - "DB_HOST=postgres"
+            - "HISTFILE=/home/www-data/bash-history/.bash_history"
+        volumes:
+            - ./notify-parser:/var/www/notify-parser
+            - parser-bash-history:/home/www-data/bash-history/:rw
+        depends_on:
+            - postgres
+
+    postgres:
+        container_name: notify-parser-postgres
+        image: postgres:13.3
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: notify-parser
+        volumes:
+            - postgres:/var/lib/postgresql/data
+        ports:
+            - "54321:5432"
+
+volumes:
+    postgres:
+    parser-bash-history:
